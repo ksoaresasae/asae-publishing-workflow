@@ -28,6 +28,9 @@ class ASAE_PW_Permissions {
         // Post list filtering.
         add_action('pre_get_posts', array($this, 'filter_post_queries'));
 
+        // Hide shadow drafts from all post list queries (admins included).
+        add_action('pre_get_posts', array($this, 'hide_shadow_drafts'));
+
         // Notice on filtered post lists explaining the scope.
         add_action('admin_notices', array($this, 'show_filtering_notice'));
 
@@ -478,6 +481,44 @@ class ASAE_PW_Permissions {
         }
 
         $query->set('tax_query', $tax_query);
+    }
+
+    /**
+     * Hide shadow drafts from post list queries.
+     *
+     * Shadow drafts are an implementation detail of the editor workflow —
+     * they should never appear in normal post lists alongside the originals.
+     * Editors are redirected to their shadow when opening the original;
+     * publishers and admins review shadows via the Submissions tab.
+     *
+     * @param WP_Query $query
+     */
+    public function hide_shadow_drafts($query) {
+        if (!is_admin() || !$query->is_main_query()) {
+            return;
+        }
+
+        $post_type = $query->get('post_type');
+        if (is_array($post_type)) {
+            $post_type = reset($post_type);
+        }
+        if (!$post_type) {
+            $post_type = 'post';
+        }
+
+        if ('attachment' === $post_type || !self::is_managed_post_type($post_type)) {
+            return;
+        }
+
+        $existing = $query->get('meta_query');
+        if (!is_array($existing)) {
+            $existing = array();
+        }
+        $existing[] = array(
+            'key'     => '_asae_pw_shadow_of',
+            'compare' => 'NOT EXISTS',
+        );
+        $query->set('meta_query', $existing);
     }
 
     /**

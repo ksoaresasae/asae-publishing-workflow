@@ -16,6 +16,39 @@ class ASAE_PW_Workflow {
         add_action('wp_ajax_asae_pw_approve_submission', array($this, 'ajax_approve_submission'));
         add_action('wp_ajax_asae_pw_reject_submission', array($this, 'ajax_reject_submission'));
         add_action('wp_ajax_asae_pw_cancel_submission', array($this, 'ajax_cancel_submission'));
+
+        // If a shadow draft is published by ANY means (Gutenberg Publish,
+        // Quick Edit, REST, or our own Approve button), intercept and merge
+        // its content into the original instead of leaving a duplicate.
+        add_action('transition_post_status', array(__CLASS__, 'on_shadow_publish_transition'), 5, 3);
+    }
+
+    /**
+     * Detect a shadow draft transitioning to publish and merge it into
+     * the original. Runs at priority 5 so the original is updated before
+     * cache purging (priority 10).
+     *
+     * @param string  $new_status
+     * @param string  $old_status
+     * @param WP_Post $post
+     */
+    public static function on_shadow_publish_transition($new_status, $old_status, $post) {
+        static $merging = false;
+        if ($merging) {
+            return;
+        }
+        if ('publish' !== $new_status) {
+            return;
+        }
+
+        $shadow_of = get_post_meta($post->ID, '_asae_pw_shadow_of', true);
+        if (!$shadow_of) {
+            return;
+        }
+
+        $merging = true;
+        self::merge_shadow_draft($post, (int) $shadow_of);
+        $merging = false;
     }
 
     /**
@@ -102,7 +135,7 @@ class ASAE_PW_Workflow {
 
         if ($shadow_of) {
             // This is a shadow draft — merge into original.
-            $this->merge_shadow_draft($post, (int) $shadow_of);
+            self::merge_shadow_draft($post, (int) $shadow_of);
         } else {
             // Regular submission — publish the post.
             wp_update_post(array(
@@ -241,16 +274,23 @@ class ASAE_PW_Workflow {
     /**
      * Merge a shadow draft's content into the original published post.
      *
+     * Copies content/title/excerpt/featured image/custom fields from the
+     * shadow into the original, keeps the original's post_author and
+     * post_date intact (so navigation, slug, and authorship are preserved),
+     * then deletes the shadow.
+     *
      * @param WP_Post $shadow     The shadow draft post.
      * @param int     $original_id The published post ID.
      */
-    private function merge_shadow_draft($shadow, $original_id) {
+    public static function merge_shadow_draft($shadow, $original_id) {
         $original = get_post($original_id);
         if (!$original) {
             return;
         }
 
-        // Copy content fields.
+        // Copy content fields. Note: post_author, post_date, post_name (slug),
+        // and post_parent are intentionally NOT passed so wp_update_post
+        // preserves them on the original.
         wp_update_post(array(
             'ID'           => $original_id,
             'post_title'   => $shadow->post_title,
@@ -282,6 +322,9 @@ class ASAE_PW_Workflow {
 
         // Clean up shadow.
         delete_post_meta($original_id, '_asae_pw_has_shadow');
+        // Force-delete (skip trash) and remove the shadow's _asae_pw_shadow_of
+        // meta first so any post-delete hooks don't try to recurse.
+        delete_post_meta($shadow->ID, '_asae_pw_shadow_of');
         wp_delete_post($shadow->ID, true);
 
         ASAE_PW_Activity_Log::log($original_id, get_current_user_id(), 'shadow_merged',
