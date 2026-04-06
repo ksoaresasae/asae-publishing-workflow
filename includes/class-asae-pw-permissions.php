@@ -285,6 +285,28 @@ class ASAE_PW_Permissions {
 
         $post_id = $postarr['ID'] ?? 0;
 
+        // Editors must never modify a published post directly. If somehow a
+        // save reaches here for an editor on a non-shadow published post,
+        // preserve the published content by short-circuiting the save —
+        // restore the original post fields and leave status as 'publish'.
+        if (ASAE_PW_Roles::is_editor($user) && $post_id) {
+            $is_shadow = (bool) get_post_meta($post_id, '_asae_pw_shadow_of', true);
+            $current_status = get_post_field('post_status', $post_id);
+            if (!$is_shadow && 'publish' === $current_status) {
+                $original = get_post($post_id);
+                if ($original) {
+                    $data['post_title']   = $original->post_title;
+                    $data['post_content'] = $original->post_content;
+                    $data['post_excerpt'] = $original->post_excerpt;
+                    $data['post_status']  = 'publish';
+                    ASAE_PW_Activity_Log::log($post_id, $user->ID, 'status_changed',
+                        __('Editor attempted to save changes to a published post directly; original content preserved. Use a shadow draft to propose changes.', 'asae-publishing-workflow')
+                    );
+                    return $data;
+                }
+            }
+        }
+
         // Editors cannot publish or schedule.
         if (ASAE_PW_Roles::is_editor($user)) {
             if (in_array($data['post_status'], array('publish', 'future'), true)) {
@@ -543,6 +565,21 @@ class ASAE_PW_Permissions {
         if (!ASAE_PW_Assignments::user_has_term($user->ID, $post_terms)) {
             wp_safe_redirect(admin_url());
             exit;
+        }
+
+        // Editor opening a published post: redirect to a shadow draft so the
+        // original is never touched. Publishers and Admins edit the live post
+        // directly per spec.
+        if (ASAE_PW_Roles::is_editor($user) && 'publish' === $post->post_status) {
+            // Don't redirect if this post is itself a shadow draft.
+            $is_shadow = get_post_meta($post_id, '_asae_pw_shadow_of', true);
+            if (!$is_shadow) {
+                $shadow_id = ASAE_PW_Workflow::create_shadow_draft($post_id, $user->ID);
+                if (!is_wp_error($shadow_id) && $shadow_id) {
+                    wp_safe_redirect(admin_url('post.php?post=' . (int) $shadow_id . '&action=edit'));
+                    exit;
+                }
+            }
         }
     }
 

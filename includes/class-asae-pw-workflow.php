@@ -308,6 +308,8 @@ class ASAE_PW_Workflow {
             return (int) $existing_shadow;
         }
 
+        // Insert with shadow_of meta in place from the start so any
+        // wp_insert_post / activity-log hooks can detect it as a shadow.
         $shadow_id = wp_insert_post(array(
             'post_title'   => $original->post_title,
             'post_content' => $original->post_content,
@@ -315,14 +317,16 @@ class ASAE_PW_Workflow {
             'post_status'  => 'draft',
             'post_type'    => $original->post_type,
             'post_author'  => $user_id,
+            'meta_input'   => array(
+                '_asae_pw_shadow_of' => $post_id,
+            ),
         ));
 
         if (is_wp_error($shadow_id)) {
             return $shadow_id;
         }
 
-        // Link shadow and original.
-        update_post_meta($shadow_id, '_asae_pw_shadow_of', $post_id);
+        // Link the original back to the shadow.
         update_post_meta($post_id, '_asae_pw_has_shadow', $shadow_id);
 
         // Copy featured image.
