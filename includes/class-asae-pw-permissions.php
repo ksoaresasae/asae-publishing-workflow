@@ -498,6 +498,11 @@ class ASAE_PW_Permissions {
             return;
         }
 
+        // Admins always see shadows so they can manage stuck/orphaned ones.
+        if (current_user_can('manage_options')) {
+            return;
+        }
+
         $post_type = $query->get('post_type');
         if (is_array($post_type)) {
             $post_type = reset($post_type);

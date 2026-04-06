@@ -21,6 +21,24 @@ class ASAE_PW_Workflow {
         // Quick Edit, REST, or our own Approve button), intercept and merge
         // its content into the original instead of leaving a duplicate.
         add_action('transition_post_status', array(__CLASS__, 'on_shadow_publish_transition'), 5, 3);
+
+        // If a shadow is trashed or deleted manually, clean the original's
+        // pointer meta so a fresh shadow can be created next time.
+        add_action('wp_trash_post', array(__CLASS__, 'on_shadow_trashed'));
+        add_action('before_delete_post', array(__CLASS__, 'on_shadow_trashed'));
+    }
+
+    /**
+     * When a shadow draft is trashed or deleted, clear the original's
+     * _asae_pw_has_shadow meta so a new shadow can be created.
+     *
+     * @param int $post_id
+     */
+    public static function on_shadow_trashed($post_id) {
+        $shadow_of = get_post_meta($post_id, '_asae_pw_shadow_of', true);
+        if ($shadow_of) {
+            delete_post_meta((int) $shadow_of, '_asae_pw_has_shadow');
+        }
     }
 
     /**
@@ -345,10 +363,21 @@ class ASAE_PW_Workflow {
             return new WP_Error('not_found', __('Original post not found.', 'asae-publishing-workflow'));
         }
 
-        // Check if shadow already exists.
+        // Check if a usable shadow already exists. A trashed or missing
+        // shadow does not count — clean up stale meta and create a fresh one.
         $existing_shadow = get_post_meta($post_id, '_asae_pw_has_shadow', true);
-        if ($existing_shadow && get_post($existing_shadow)) {
-            return (int) $existing_shadow;
+        if ($existing_shadow) {
+            $existing_post = get_post($existing_shadow);
+            if ($existing_post && 'trash' !== $existing_post->post_status) {
+                return (int) $existing_shadow;
+            }
+            // Stale pointer — clean up before creating fresh.
+            delete_post_meta($post_id, '_asae_pw_has_shadow');
+            if ($existing_post) {
+                // Hard-delete the trashed shadow so nothing references it.
+                delete_post_meta($existing_post->ID, '_asae_pw_shadow_of');
+                wp_delete_post($existing_post->ID, true);
+            }
         }
 
         // Insert with shadow_of meta in place from the start so any
