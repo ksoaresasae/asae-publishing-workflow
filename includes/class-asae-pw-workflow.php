@@ -35,6 +35,42 @@ class ASAE_PW_Workflow {
         // Show a "Pending Update" badge on the published post in the post
         // list when there's a pending shadow draft for it.
         add_filter('display_post_states', array(__CLASS__, 'add_pending_update_state'), 10, 2);
+
+        // Auto-create a submission record whenever a shadow draft transitions
+        // to pending. Covers users who set status via Gutenberg or any other
+        // path that doesn't go through our "Submit for Review" button.
+        add_action('transition_post_status', array(__CLASS__, 'on_shadow_pending_transition'), 10, 3);
+    }
+
+    /**
+     * When a shadow draft enters pending status, ensure a submission record
+     * exists so it shows up in the Publisher's review queue.
+     *
+     * @param string  $new_status
+     * @param string  $old_status
+     * @param WP_Post $post
+     */
+    public static function on_shadow_pending_transition($new_status, $old_status, $post) {
+        if ('pending' !== $new_status || $new_status === $old_status) {
+            return;
+        }
+        $shadow_of = get_post_meta($post->ID, '_asae_pw_shadow_of', true);
+        if (!$shadow_of) {
+            return;
+        }
+        $existing = self::get_pending_submission($post->ID);
+        if ($existing) {
+            return;
+        }
+        $submitted_by = (int) $post->post_author;
+        if (!$submitted_by) {
+            $submitted_by = get_current_user_id();
+        }
+        self::create_submission($post->ID, $submitted_by, '');
+        ASAE_PW_Activity_Log::log($post->ID, $submitted_by, 'submitted',
+            __('Submitted for review.', 'asae-publishing-workflow')
+        );
+        ASAE_PW_Notifications::on_submission($post->ID, $submitted_by, '');
     }
 
     /**
