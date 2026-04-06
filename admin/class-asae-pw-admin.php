@@ -27,43 +27,24 @@ class ASAE_PW_Admin {
      * Register a single submenu page under the ASAE top-level menu.
      */
     public function register_menus() {
-        // Fallback: create ASAE top-level menu if asae-explore is not active.
-        global $menu;
-        $asae_menu_exists = false;
-        if (is_array($menu)) {
-            foreach ($menu as $item) {
-                if (isset($item[2]) && 'asae-explore' === $item[2]) {
-                    $asae_menu_exists = true;
-                    break;
-                }
-            }
-        }
-
-        $parent_slug = 'asae-explore';
-
-        if (!$asae_menu_exists) {
+        // If the ASAE top-level menu doesn't exist yet (Explore not active),
+        // create a fallback so our submenu page has a parent.
+        global $admin_page_hooks;
+        if (empty($admin_page_hooks['asae'])) {
             add_menu_page(
-                'ASAE',
-                'ASAE',
+                __('ASAE', 'asae-publishing-workflow'),
+                __('ASAE', 'asae-publishing-workflow'),
                 'read',
-                'asae-explore',
+                'asae',
                 array($this, 'render_fallback_page'),
                 'dashicons-building',
                 30
             );
-            add_submenu_page(
-                'asae-explore',
-                __('ASAE', 'asae-publishing-workflow'),
-                __('ASAE Home', 'asae-publishing-workflow'),
-                'read',
-                'asae-explore',
-                array($this, 'render_fallback_page')
-            );
         }
 
-        // Single submenu entry.
+        // Single submenu entry under the ASAE menu.
         add_submenu_page(
-            $parent_slug,
+            'asae',
             __('Publishing Workflow', 'asae-publishing-workflow'),
             __('Publishing Workflow', 'asae-publishing-workflow'),
             'read',
@@ -185,7 +166,6 @@ class ASAE_PW_Admin {
     public function enqueue_assets($hook_suffix) {
         $our_pages = array(
             'asae_page_' . self::PAGE_SLUG,
-            'asae-explore_page_' . self::PAGE_SLUG,
         );
 
         $is_our_page = in_array($hook_suffix, $our_pages, true)
