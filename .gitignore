@@ -1,0 +1,16 @@
+# Build output
+releases/*.zip
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Dependencies (shouldn't exist per lightweight principle)
+vendor/
+node_modules/

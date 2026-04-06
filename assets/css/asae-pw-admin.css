@@ -1,0 +1,418 @@
+/**
+ * ASAE Publishing Workflow — Admin Styles
+ *
+ * @package ASAE_Publishing_Workflow
+ */
+
+/* ========================================================================
+   Dashboard cards
+   ======================================================================== */
+
+.asae-pw-dashboard-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin: 20px 0;
+}
+
+.asae-pw-card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 20px;
+    min-width: 200px;
+    flex: 1;
+    max-width: 300px;
+}
+
+.asae-pw-card h2 {
+    margin-top: 0;
+    font-size: 14px;
+    color: #1d2327;
+}
+
+.asae-pw-count {
+    font-size: 36px;
+    font-weight: 600;
+    margin: 8px 0 16px;
+    color: #2271b1;
+}
+
+.asae-pw-assignment-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.asae-pw-assignment-list li {
+    padding: 4px 0;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.asae-pw-assignment-list li:last-child {
+    border-bottom: none;
+}
+
+/* ========================================================================
+   Badges
+   ======================================================================== */
+
+.asae-pw-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.asae-pw-badge-pending {
+    background: #f0c33c;
+    color: #1d2327;
+}
+
+.asae-pw-badge-approved {
+    background: #00a32a;
+    color: #fff;
+}
+
+.asae-pw-badge-rejected {
+    background: #d63638;
+    color: #fff;
+}
+
+.asae-pw-badge-cancelled {
+    background: #787c82;
+    color: #fff;
+}
+
+.asae-pw-badge-info {
+    background: #72aee6;
+    color: #fff;
+}
+
+/* ========================================================================
+   Modal dialog
+   ======================================================================== */
+
+.asae-pw-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 100100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.asae-pw-modal[hidden] {
+    display: none;
+}
+
+.asae-pw-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.asae-pw-modal-content {
+    background: #fff;
+    border-radius: 4px;
+    padding: 24px;
+    position: relative;
+    z-index: 1;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.asae-pw-modal-content h2 {
+    margin-top: 0;
+}
+
+.asae-pw-modal-content label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.asae-pw-modal-content textarea {
+    width: 100%;
+    margin-bottom: 12px;
+}
+
+.asae-pw-modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 16px;
+}
+
+/* ========================================================================
+   Notices within meta boxes
+   ======================================================================== */
+
+.asae-pw-notice {
+    padding: 8px 12px;
+    margin: 8px 0;
+    border-left: 4px solid #72aee6;
+    background: #f0f6fc;
+}
+
+.asae-pw-notice-pending {
+    border-left-color: #f0c33c;
+    background: #fcf9e8;
+}
+
+.asae-pw-notice-warning {
+    border-left-color: #dba617;
+    background: #fcf9e8;
+}
+
+.asae-pw-notice-info {
+    border-left-color: #72aee6;
+    background: #f0f6fc;
+}
+
+/* ========================================================================
+   Workflow actions in meta box
+   ======================================================================== */
+
+.asae-pw-actions {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+/* ========================================================================
+   Activity timeline (meta box)
+   ======================================================================== */
+
+.asae-pw-activity-timeline {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+}
+
+.asae-pw-activity-entry {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #f0f0f1;
+    font-size: 13px;
+    align-items: baseline;
+}
+
+.asae-pw-activity-entry:last-child {
+    border-bottom: none;
+}
+
+.asae-pw-activity-date {
+    color: #787c82;
+    min-width: 140px;
+}
+
+.asae-pw-activity-user {
+    font-weight: 600;
+    min-width: 120px;
+}
+
+.asae-pw-activity-action {
+    color: #2271b1;
+}
+
+.asae-pw-activity-detail {
+    width: 100%;
+    color: #50575e;
+    font-style: italic;
+    padding-left: 148px;
+}
+
+/* ========================================================================
+   Filter bars and forms
+   ======================================================================== */
+
+.asae-pw-filter-bar {
+    margin: 12px 0;
+}
+
+.asae-pw-filter-bar select,
+.asae-pw-filter-bar input {
+    margin-right: 8px;
+}
+
+.asae-pw-inline-form {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.asae-pw-form-row {
+    margin-bottom: 12px;
+}
+
+.asae-pw-form-row label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.asae-pw-checkbox-label {
+    display: inline-block;
+    margin-right: 16px;
+    font-weight: normal !important;
+}
+
+.asae-pw-bulk-actions {
+    margin: 12px 0;
+}
+
+/* ========================================================================
+   Activity Log search page
+   ======================================================================== */
+
+.asae-pw-activity-search-form {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.asae-pw-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 12px;
+}
+
+.asae-pw-form-actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.asae-pw-hint {
+    color: #787c82;
+    font-style: italic;
+    padding: 20px;
+    text-align: center;
+}
+
+/* ========================================================================
+   Autocomplete
+   ======================================================================== */
+
+.asae-pw-autocomplete-results {
+    position: absolute;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-top: none;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    width: 100%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.asae-pw-autocomplete-results[hidden] {
+    display: none;
+}
+
+.asae-pw-autocomplete-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.asae-pw-autocomplete-item:hover,
+.asae-pw-autocomplete-item:focus {
+    background: #f0f6fc;
+    outline: 2px solid #2271b1;
+    outline-offset: -2px;
+}
+
+.asae-pw-form-row {
+    position: relative;
+}
+
+/* ========================================================================
+   Read-only Content Area list
+   ======================================================================== */
+
+.asae-pw-content-areas-readonly {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.asae-pw-content-areas-readonly li {
+    padding: 2px 0;
+}
+
+.asae-pw-proposed-change {
+    margin-top: 8px;
+    color: #996800;
+}
+
+/* ========================================================================
+   Submission status sub-nav
+   ======================================================================== */
+
+.subsubsub {
+    margin-bottom: 16px;
+}
+
+/* ========================================================================
+   Activity results table
+   ======================================================================== */
+
+#asae-pw-activity-results table {
+    margin-top: 12px;
+}
+
+#asae-pw-activity-results .tablenav-pages {
+    margin-top: 12px;
+    text-align: right;
+}
+
+/* ========================================================================
+   Spinner alignment
+   ======================================================================== */
+
+.asae-pw-wrap .spinner {
+    float: none;
+    vertical-align: middle;
+}
+
+/* ========================================================================
+   Responsive
+   ======================================================================== */
+
+@media screen and (max-width: 782px) {
+    .asae-pw-dashboard-cards {
+        flex-direction: column;
+    }
+
+    .asae-pw-card {
+        max-width: none;
+    }
+
+    .asae-pw-filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .asae-pw-activity-detail {
+        padding-left: 0;
+    }
+}
