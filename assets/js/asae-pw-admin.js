@@ -626,7 +626,7 @@
 
         $btn.prop('disabled', true);
         $spinner.addClass('is-active');
-        $result.text('');
+        $result.html('');
 
         $.post(asaePW.ajaxUrl, {
             action: 'asae_pw_check_updates',
@@ -634,7 +634,7 @@
         }, function (response) {
             $spinner.removeClass('is-active');
             $btn.prop('disabled', false);
-            $result.text(response.data.message || '');
+            $result.html(response.data.html || '');
         }).fail(function () {
             $spinner.removeClass('is-active');
             $btn.prop('disabled', false);

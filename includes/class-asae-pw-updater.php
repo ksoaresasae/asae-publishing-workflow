@@ -170,22 +170,25 @@ class ASAE_PW_Updater {
         $new_version    = $has_update ? $update_plugins->response[$this->basename]->new_version : '';
 
         if ($has_update) {
+            $plugins_url = admin_url('plugins.php');
+            $html = sprintf(
+                /* translators: 1: new version, 2: link to plugins page */
+                __('Update available: v%1$s. %2$s to update.', 'asae-publishing-workflow'),
+                esc_html($new_version),
+                '<a href="' . esc_url($plugins_url) . '">' . esc_html__('Go to the Plugins page', 'asae-publishing-workflow') . '</a>'
+            );
             wp_send_json_success(array(
-                'message'     => sprintf(
-                    /* translators: %s: new version number */
-                    __('Update available: v%s. Go to the Plugins page to update.', 'asae-publishing-workflow'),
-                    $new_version
-                ),
+                'html'        => $html,
                 'has_update'  => true,
                 'new_version' => $new_version,
             ));
         } else {
             wp_send_json_success(array(
-                'message'    => sprintf(
+                'html'       => esc_html(sprintf(
                     /* translators: %s: current version */
                     __('You are running the latest version (v%s).', 'asae-publishing-workflow'),
                     $this->version
-                ),
+                )),
                 'has_update' => false,
             ));
         }
