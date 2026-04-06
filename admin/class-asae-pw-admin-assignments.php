@@ -53,11 +53,11 @@ class ASAE_PW_Admin_Assignments {
             'hide_empty' => false,
         ));
 
-        // Get users who could be assigned (PW roles + all users for the dropdown).
+        // Get all users for the dropdown — admins need to assign any user, not just
+        // those who already have PW roles.
         $assignable_users = get_users(array(
-            'role__in' => array('asae_pw_editor', 'asae_pw_publisher'),
-            'orderby'  => 'display_name',
-            'order'    => 'ASC',
+            'orderby' => 'display_name',
+            'order'   => 'ASC',
         ));
 
         ?>
@@ -96,7 +96,14 @@ class ASAE_PW_Admin_Assignments {
                                     </label>
                                 <?php endforeach; ?>
                             <?php else : ?>
-                                <p><?php esc_html_e('No Content Areas defined yet. Create them in the taxonomy editor.', 'asae-publishing-workflow'); ?></p>
+                                <p><?php
+                                    $tax_url = admin_url('edit-tags.php?taxonomy=' . ASAE_PW_Taxonomy::TAXONOMY);
+                                    printf(
+                                        /* translators: %s: link to taxonomy editor */
+                                        esc_html__('No Content Areas defined yet. %s to create them.', 'asae-publishing-workflow'),
+                                        '<a href="' . esc_url($tax_url) . '">' . esc_html__('Go to the Content Areas editor', 'asae-publishing-workflow') . '</a>'
+                                    );
+                                ?></p>
                             <?php endif; ?>
                         </fieldset>
                     </div>
