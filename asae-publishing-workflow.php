@@ -3,7 +3,7 @@
  * Plugin Name: ASAE Publishing Workflow
  * Plugin URI:  https://github.com/ksoaresasae/asae-publishing-workflow
  * Description: Content ownership and editorial workflow system — assigns users to content areas and enforces a two-step Editor/Publisher approval workflow.
- * Version:     0.4.3
+ * Version:     0.4.4
  * Author:      Keith M. Soares
  * Author URI:  https://www.asaecenter.org
  * License:     GPL v2 or later
@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('ASAE_PW_VERSION', '0.4.3');
+define('ASAE_PW_VERSION', '0.4.4');
 define('ASAE_PW_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('ASAE_PW_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('ASAE_PW_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -144,6 +144,25 @@ class ASAE_Publishing_Workflow {
         // Older versions did not assign roles automatically, so existing installs
         // need this catch-up sync.
         ASAE_PW_Assignments::sync_all_user_roles();
+
+        // Backfill: any shadow draft already in pending status without a
+        // submission row gets one created, so they show up in the publisher
+        // queue after upgrading from a version that didn't auto-create.
+        global $wpdb;
+        $orphaned = $wpdb->get_results(
+            "SELECT p.ID, p.post_author FROM {$wpdb->posts} p
+             INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+             WHERE pm.meta_key = '_asae_pw_shadow_of'
+               AND p.post_status = 'pending'"
+        );
+        if ($orphaned) {
+            foreach ($orphaned as $row) {
+                $post_id = (int) $row->ID;
+                if (!ASAE_PW_Workflow::get_pending_submission($post_id)) {
+                    ASAE_PW_Workflow::create_submission($post_id, (int) $row->post_author, '');
+                }
+            }
+        }
 
         update_option('asae_pw_version', ASAE_PW_VERSION);
 
