@@ -3,7 +3,7 @@
  * Plugin Name: ASAE Publishing Workflow
  * Plugin URI:  https://github.com/ksoaresasae/asae-publishing-workflow
  * Description: Content ownership and editorial workflow system — assigns users to content areas and enforces a two-step Editor/Publisher approval workflow.
- * Version:     0.2.3
+ * Version:     0.2.4
  * Author:      Keith M. Soares
  * Author URI:  https://www.asaecenter.org
  * License:     GPL v2 or later
@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('ASAE_PW_VERSION', '0.2.3');
+define('ASAE_PW_VERSION', '0.2.4');
 define('ASAE_PW_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('ASAE_PW_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('ASAE_PW_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -96,8 +96,8 @@ class ASAE_Publishing_Workflow {
      * Register all WordPress hooks.
      */
     private function init_hooks() {
-        // Run upgrade routine if version has changed since last load.
-        add_action('init', array($this, 'maybe_upgrade'), 5);
+        // Run upgrade routine immediately, before any user/cap caching.
+        $this->maybe_upgrade();
 
         // Core components — always loaded.
         new ASAE_PW_Taxonomy();
@@ -141,6 +141,15 @@ class ASAE_Publishing_Workflow {
         ASAE_PW_Roles::create_roles();
 
         update_option('asae_pw_version', ASAE_PW_VERSION);
+
+        // If a user has already been loaded for this request, refresh their
+        // in-memory caps so the new role definitions take effect immediately.
+        if (function_exists('wp_get_current_user')) {
+            $current = wp_get_current_user();
+            if ($current && $current->ID) {
+                $current->get_role_caps();
+            }
+        }
     }
 }
 
