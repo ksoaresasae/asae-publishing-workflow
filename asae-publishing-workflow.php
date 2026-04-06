@@ -3,7 +3,7 @@
  * Plugin Name: ASAE Publishing Workflow
  * Plugin URI:  https://github.com/ksoaresasae/asae-publishing-workflow
  * Description: Content ownership and editorial workflow system — assigns users to content areas and enforces a two-step Editor/Publisher approval workflow.
- * Version:     0.1.3
+ * Version:     0.2.0
  * Author:      Keith M. Soares
  * Author URI:  https://www.asaecenter.org
  * License:     GPL v2 or later
@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('ASAE_PW_VERSION', '0.1.3');
+define('ASAE_PW_VERSION', '0.2.0');
 define('ASAE_PW_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('ASAE_PW_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('ASAE_PW_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -96,6 +96,9 @@ class ASAE_Publishing_Workflow {
      * Register all WordPress hooks.
      */
     private function init_hooks() {
+        // Run upgrade routine if version has changed since last load.
+        add_action('init', array($this, 'maybe_upgrade'), 5);
+
         // Core components — always loaded.
         new ASAE_PW_Taxonomy();
         new ASAE_PW_Permissions();
@@ -112,6 +115,24 @@ class ASAE_Publishing_Workflow {
             new ASAE_PW_Admin();
             new ASAE_PW_Meta_Boxes();
         }
+    }
+
+    /**
+     * Run upgrade routines when the plugin version changes.
+     *
+     * Re-creates roles so capability changes propagate to existing installs
+     * without requiring deactivate/reactivate.
+     */
+    public function maybe_upgrade() {
+        $stored_version = get_option('asae_pw_version');
+        if ($stored_version === ASAE_PW_VERSION) {
+            return;
+        }
+
+        // Re-create roles with current cap definitions.
+        ASAE_PW_Roles::create_roles();
+
+        update_option('asae_pw_version', ASAE_PW_VERSION);
     }
 }
 

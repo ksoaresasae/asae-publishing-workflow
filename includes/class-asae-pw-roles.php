@@ -21,6 +21,7 @@ class ASAE_PW_Roles {
             'read'         => true,
             'upload_files' => true,
             'edit_posts'   => true,
+            'edit_pages'   => true,
         );
     }
 
@@ -34,6 +35,7 @@ class ASAE_PW_Roles {
             'read'         => true,
             'upload_files' => true,
             'edit_posts'   => true,
+            'edit_pages'   => true,
         );
     }
 
