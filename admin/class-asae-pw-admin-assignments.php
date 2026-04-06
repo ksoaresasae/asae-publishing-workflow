@@ -239,6 +239,10 @@ class ASAE_PW_Admin_Assignments {
             }
         }
 
+        // Ensure the user has the corresponding WP role so the plugin's
+        // capability filters apply to them.
+        ASAE_PW_Assignments::sync_user_roles($user_id);
+
         wp_send_json_success(array(
             'message' => sprintf(
                 __('%d assignment(s) created, %d skipped (duplicates).', 'asae-publishing-workflow'),
@@ -263,7 +267,19 @@ class ASAE_PW_Admin_Assignments {
             wp_send_json_error(array('message' => __('Invalid assignment.', 'asae-publishing-workflow')));
         }
 
+        // Look up the user before deleting so we can sync roles afterward.
+        global $wpdb;
+        $user_id = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT user_id FROM {$wpdb->prefix}asae_pw_assignments WHERE id = %d",
+            $id
+        ));
+
         ASAE_PW_Assignments::delete($id);
+
+        if ($user_id) {
+            ASAE_PW_Assignments::sync_user_roles($user_id);
+        }
+
         wp_send_json_success(array('message' => __('Assignment removed.', 'asae-publishing-workflow')));
     }
 
@@ -282,8 +298,20 @@ class ASAE_PW_Admin_Assignments {
             wp_send_json_error(array('message' => __('No assignments selected.', 'asae-publishing-workflow')));
         }
 
+        // Collect affected user IDs before deletion so we can sync roles after.
+        global $wpdb;
+        $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+        $user_ids = array_map('intval', $wpdb->get_col($wpdb->prepare(
+            "SELECT DISTINCT user_id FROM {$wpdb->prefix}asae_pw_assignments WHERE id IN ({$placeholders})",
+            ...$ids
+        )));
+
         foreach ($ids as $id) {
             ASAE_PW_Assignments::delete($id);
+        }
+
+        foreach ($user_ids as $user_id) {
+            ASAE_PW_Assignments::sync_user_roles($user_id);
         }
 
         wp_send_json_success(array(

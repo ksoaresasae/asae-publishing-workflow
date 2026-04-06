@@ -3,7 +3,7 @@
  * Plugin Name: ASAE Publishing Workflow
  * Plugin URI:  https://github.com/ksoaresasae/asae-publishing-workflow
  * Description: Content ownership and editorial workflow system — assigns users to content areas and enforces a two-step Editor/Publisher approval workflow.
- * Version:     0.2.4
+ * Version:     0.2.5
  * Author:      Keith M. Soares
  * Author URI:  https://www.asaecenter.org
  * License:     GPL v2 or later
@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('ASAE_PW_VERSION', '0.2.4');
+define('ASAE_PW_VERSION', '0.2.5');
 define('ASAE_PW_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('ASAE_PW_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('ASAE_PW_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -139,6 +139,11 @@ class ASAE_Publishing_Workflow {
 
         // Re-create roles with current cap definitions.
         ASAE_PW_Roles::create_roles();
+
+        // Backfill: ensure every user with an assignment has the matching WP role.
+        // Older versions did not assign roles automatically, so existing installs
+        // need this catch-up sync.
+        ASAE_PW_Assignments::sync_all_user_roles();
 
         update_option('asae_pw_version', ASAE_PW_VERSION);
 

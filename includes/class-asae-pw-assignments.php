@@ -161,6 +161,65 @@ class ASAE_PW_Assignments {
     }
 
     /**
+     * Synchronize a user's WP roles with their content area assignments.
+     *
+     * Adds asae_pw_editor / asae_pw_publisher roles when the user has at least
+     * one assignment of that type, and removes them when they have none.
+     * Other WP roles are left untouched.
+     *
+     * @param int $user_id
+     */
+    public static function sync_user_roles($user_id) {
+        $user = get_userdata($user_id);
+        if (!$user) {
+            return;
+        }
+
+        $assignments = self::get_user_assignments($user_id);
+        $has_editor    = false;
+        $has_publisher = false;
+        foreach ($assignments as $a) {
+            if ('editor' === $a->role) {
+                $has_editor = true;
+            }
+            if ('publisher' === $a->role) {
+                $has_publisher = true;
+            }
+        }
+
+        $current_roles = (array) $user->roles;
+
+        if ($has_editor && !in_array('asae_pw_editor', $current_roles, true)) {
+            $user->add_role('asae_pw_editor');
+        } elseif (!$has_editor && in_array('asae_pw_editor', $current_roles, true)) {
+            $user->remove_role('asae_pw_editor');
+        }
+
+        if ($has_publisher && !in_array('asae_pw_publisher', $current_roles, true)) {
+            $user->add_role('asae_pw_publisher');
+        } elseif (!$has_publisher && in_array('asae_pw_publisher', $current_roles, true)) {
+            $user->remove_role('asae_pw_publisher');
+        }
+    }
+
+    /**
+     * Synchronize all users' roles based on their current assignments.
+     *
+     * Used during upgrade to backfill role assignments for installs created
+     * before automatic role syncing existed.
+     */
+    public static function sync_all_user_roles() {
+        global $wpdb;
+        $user_ids = array_map('intval', $wpdb->get_col(
+            "SELECT DISTINCT user_id FROM {$wpdb->prefix}asae_pw_assignments"
+        ));
+
+        foreach ($user_ids as $user_id) {
+            self::sync_user_roles($user_id);
+        }
+    }
+
+    /**
      * Get all users assigned as publishers for given term IDs.
      *
      * @param int[] $term_ids
