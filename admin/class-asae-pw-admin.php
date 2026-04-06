@@ -112,7 +112,9 @@ class ASAE_PW_Admin {
 
         ?>
         <div class="wrap asae-pw-wrap">
-            <h1><?php esc_html_e('Publishing Workflow', 'asae-publishing-workflow'); ?></h1>
+            <h1><?php esc_html_e('Publishing Workflow', 'asae-publishing-workflow'); ?>
+                <span class="asae-pw-version">v<?php echo esc_html(ASAE_PW_VERSION); ?></span>
+            </h1>
 
             <nav class="nav-tab-wrapper">
                 <?php foreach ($tabs as $slug => $label) : ?>
