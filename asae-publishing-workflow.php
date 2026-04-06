@@ -3,7 +3,7 @@
  * Plugin Name: ASAE Publishing Workflow
  * Plugin URI:  https://github.com/ksoaresasae/asae-publishing-workflow
  * Description: Content ownership and editorial workflow system — assigns users to content areas and enforces a two-step Editor/Publisher approval workflow.
- * Version:     0.2.2
+ * Version:     0.2.3
  * Author:      Keith M. Soares
  * Author URI:  https://www.asaecenter.org
  * License:     GPL v2 or later
@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('ASAE_PW_VERSION', '0.2.2');
+define('ASAE_PW_VERSION', '0.2.3');
 define('ASAE_PW_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('ASAE_PW_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('ASAE_PW_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -125,7 +125,15 @@ class ASAE_Publishing_Workflow {
      */
     public function maybe_upgrade() {
         $stored_version = get_option('asae_pw_version');
-        if ($stored_version === ASAE_PW_VERSION) {
+        $version_changed = $stored_version !== ASAE_PW_VERSION;
+
+        // Safety check: ensure the role exists and has the expected base caps.
+        // If the role is missing or has stale caps, recreate it even if the
+        // version option hasn't changed.
+        $role = get_role('asae_pw_editor');
+        $caps_ok = $role && !empty($role->capabilities['edit_pages']);
+
+        if (!$version_changed && $caps_ok) {
             return;
         }
 

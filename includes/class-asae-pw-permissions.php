@@ -28,6 +28,9 @@ class ASAE_PW_Permissions {
         // Post list filtering.
         add_action('pre_get_posts', array($this, 'filter_post_queries'));
 
+        // Notice on filtered post lists explaining the scope.
+        add_action('admin_notices', array($this, 'show_filtering_notice'));
+
         // Block direct URL access.
         add_action('load-post.php', array($this, 'block_unauthorized_post_access'));
         add_action('load-post-new.php', array($this, 'block_unauthorized_new_post'));
@@ -453,6 +456,53 @@ class ASAE_PW_Permissions {
         }
 
         $query->set('tax_query', $tax_query);
+    }
+
+    /**
+     * Show an admin notice on filtered post list screens explaining the scope.
+     */
+    public function show_filtering_notice() {
+        global $pagenow;
+        if ('edit.php' !== $pagenow) {
+            return;
+        }
+
+        $user = wp_get_current_user();
+        if (!ASAE_PW_Roles::is_pw_user($user)) {
+            return;
+        }
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $post_type = isset($_GET['post_type']) ? sanitize_key(wp_unslash($_GET['post_type'])) : 'post';
+        if (!self::is_managed_post_type($post_type) || 'attachment' === $post_type) {
+            return;
+        }
+
+        $user_terms = ASAE_PW_Assignments::get_user_term_ids($user->ID);
+        if (empty($user_terms)) {
+            printf(
+                '<div class="notice notice-warning"><p>%s</p></div>',
+                esc_html__('You have no Content Area assignments yet. Ask an administrator to assign you to a Content Area.', 'asae-publishing-workflow')
+            );
+            return;
+        }
+
+        $term_names = array();
+        foreach ($user_terms as $tid) {
+            $t = get_term($tid, ASAE_PW_Taxonomy::TAXONOMY);
+            if ($t && !is_wp_error($t)) {
+                $term_names[] = $t->name;
+            }
+        }
+
+        printf(
+            '<div class="notice notice-info"><p>%s</p></div>',
+            sprintf(
+                /* translators: %s: comma-separated list of Content Area names */
+                esc_html__('This list is filtered to your assigned Content Areas: %s. Existing content not yet tagged with one of these areas is hidden. Ask an administrator to tag content if you need access to it.', 'asae-publishing-workflow'),
+                '<strong>' . esc_html(implode(', ', $term_names)) . '</strong>'
+            )
+        );
     }
 
     /**
