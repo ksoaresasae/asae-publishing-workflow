@@ -23,8 +23,7 @@ class ASAE_PW_Admin_Submissions {
         if (!$is_admin) {
             $user_terms = ASAE_PW_Assignments::get_user_term_ids($user->ID);
             if (empty($user_terms)) {
-                echo '<div class="wrap"><h1>' . esc_html__('Submissions', 'asae-publishing-workflow') . '</h1>';
-                echo '<p>' . esc_html__('You have no Content Area assignments.', 'asae-publishing-workflow') . '</p></div>';
+                echo '<p>' . esc_html__('You have no Content Area assignments.', 'asae-publishing-workflow') . '</p>';
                 return;
             }
             $args['term_ids'] = $user_terms;
@@ -46,9 +45,6 @@ class ASAE_PW_Admin_Submissions {
         $total_pages = ceil($total_count / $args['per_page']);
 
         ?>
-        <div class="wrap asae-pw-wrap">
-            <h1><?php esc_html_e('Submissions', 'asae-publishing-workflow'); ?></h1>
-
             <ul class="subsubsub">
                 <?php
                 $statuses = array(
@@ -61,7 +57,7 @@ class ASAE_PW_Admin_Submissions {
                 $i = 0;
                 foreach ($statuses as $key => $label) :
                     $i++;
-                    $url = add_query_arg(array('page' => 'asae-pw-submissions', 'status' => $key), admin_url('admin.php'));
+                    $url = ASAE_PW_Admin::tab_url('submissions', array('status' => $key));
                     $current = ($status_filter === $key) ? ' class="current" aria-current="page"' : '';
                 ?>
                     <li><a href="<?php echo esc_url($url); ?>"<?php echo $current; ?>><?php echo esc_html($label); ?></a><?php echo $i < count($statuses) ? ' |' : ''; ?></li>
@@ -166,7 +162,6 @@ class ASAE_PW_Admin_Submissions {
                 </div>
             </div>
             <?php endif; ?>
-        </div>
 
         <!-- Rejection Note Modal -->
         <div id="asae-pw-reject-modal" class="asae-pw-modal" role="dialog" aria-modal="true" aria-labelledby="asae-pw-reject-modal-title" hidden>

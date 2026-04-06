@@ -61,9 +61,6 @@ class ASAE_PW_Admin_Assignments {
         ));
 
         ?>
-        <div class="wrap asae-pw-wrap">
-            <h1><?php esc_html_e('Content Area Assignments', 'asae-publishing-workflow'); ?></h1>
-
             <div class="asae-pw-add-assignment-form">
                 <h2><?php esc_html_e('Add Assignment', 'asae-publishing-workflow'); ?></h2>
                 <form id="asae-pw-add-assignment-form" class="asae-pw-inline-form">
@@ -113,7 +110,8 @@ class ASAE_PW_Admin_Assignments {
 
             <div class="asae-pw-filter-bar">
                 <form method="get" action="">
-                    <input type="hidden" name="page" value="asae-pw-assignments">
+                    <input type="hidden" name="page" value="asae-pw">
+                    <input type="hidden" name="tab" value="assignments">
 
                     <label for="filter-user" class="screen-reader-text"><?php esc_html_e('Filter by user', 'asae-publishing-workflow'); ?></label>
                     <select name="filter_user" id="filter-user">
@@ -198,7 +196,6 @@ class ASAE_PW_Admin_Assignments {
                 </div>
             </form>
             <?php endif; ?>
-        </div>
         <?php
     }
 

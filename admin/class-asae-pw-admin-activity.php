@@ -69,9 +69,6 @@ class ASAE_PW_Admin_Activity {
         );
 
         ?>
-        <div class="wrap asae-pw-wrap">
-            <h1><?php esc_html_e('Activity Log', 'asae-publishing-workflow'); ?></h1>
-
             <div class="asae-pw-activity-search-form">
                 <form id="asae-pw-activity-filter-form">
                     <div class="asae-pw-filter-grid">
@@ -153,7 +150,6 @@ class ASAE_PW_Admin_Activity {
                     <p class="asae-pw-hint"><?php esc_html_e('Use the filters above to search the activity log.', 'asae-publishing-workflow'); ?></p>
                 <?php endif; ?>
             </div>
-        </div>
         <?php
     }
 

@@ -1,6 +1,10 @@
 <?php
 /**
- * Admin menu registration and page routing.
+ * Admin menu registration and tab-based page routing.
+ *
+ * Single submenu entry "Publishing Workflow" under the ASAE menu,
+ * with internal tabs for Dashboard, Submissions, Activity Log,
+ * Assignments, and Settings.
  *
  * @package ASAE_Publishing_Workflow
  */
@@ -11,13 +15,16 @@ if (!defined('ABSPATH')) {
 
 class ASAE_PW_Admin {
 
+    /** @var string The single page slug. */
+    const PAGE_SLUG = 'asae-pw';
+
     public function __construct() {
         add_action('admin_menu', array($this, 'register_menus'), 20);
         add_action('admin_enqueue_scripts', array($this, 'enqueue_assets'));
     }
 
     /**
-     * Register submenu pages under the ASAE top-level menu.
+     * Register a single submenu page under the ASAE top-level menu.
      */
     public function register_menus() {
         // Fallback: create ASAE top-level menu if asae-explore is not active.
@@ -44,7 +51,6 @@ class ASAE_PW_Admin {
                 'dashicons-building',
                 30
             );
-            // Remove duplicate first submenu item.
             add_submenu_page(
                 'asae-explore',
                 __('ASAE', 'asae-publishing-workflow'),
@@ -55,90 +61,111 @@ class ASAE_PW_Admin {
             );
         }
 
-        // Dashboard — visible to all PW users and Admins.
+        // Single submenu entry.
         add_submenu_page(
             $parent_slug,
             __('Publishing Workflow', 'asae-publishing-workflow'),
             __('Publishing Workflow', 'asae-publishing-workflow'),
             'read',
-            'asae-pw-dashboard',
-            array($this, 'route_page')
-        );
-
-        // Submissions — visible to Publishers and Admins.
-        add_submenu_page(
-            $parent_slug,
-            __('Submissions', 'asae-publishing-workflow'),
-            __('PW Submissions', 'asae-publishing-workflow'),
-            'read',
-            'asae-pw-submissions',
-            array($this, 'route_page')
-        );
-
-        // Activity Log — visible to all PW users and Admins.
-        add_submenu_page(
-            $parent_slug,
-            __('Activity Log', 'asae-publishing-workflow'),
-            __('PW Activity Log', 'asae-publishing-workflow'),
-            'read',
-            'asae-pw-activity-log',
-            array($this, 'route_page')
-        );
-
-        // Assignments — Admin only.
-        add_submenu_page(
-            $parent_slug,
-            __('Assignments', 'asae-publishing-workflow'),
-            __('PW Assignments', 'asae-publishing-workflow'),
-            'manage_options',
-            'asae-pw-assignments',
-            array($this, 'route_page')
-        );
-
-        // Settings — Admin only.
-        add_submenu_page(
-            $parent_slug,
-            __('PW Settings', 'asae-publishing-workflow'),
-            __('PW Settings', 'asae-publishing-workflow'),
-            'manage_options',
-            'asae-pw-settings',
-            array($this, 'route_page')
+            self::PAGE_SLUG,
+            array($this, 'render_page')
         );
     }
 
     /**
-     * Route to the correct admin page renderer.
+     * Get the current active tab.
+     *
+     * @return string
      */
-    public function route_page() {
+    public static function get_current_tab() {
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-        $page = isset($_GET['page']) ? sanitize_text_field(wp_unslash($_GET['page'])) : '';
+        $tab = isset($_GET['tab']) ? sanitize_text_field(wp_unslash($_GET['tab'])) : 'dashboard';
+        $valid = array('dashboard', 'submissions', 'activity-log', 'assignments', 'settings');
+        return in_array($tab, $valid, true) ? $tab : 'dashboard';
+    }
 
-        // Access control for PW users.
-        $user = wp_get_current_user();
-        if (ASAE_PW_Roles::is_pw_user($user)) {
-            // Editors cannot access submissions page.
-            if ('asae-pw-submissions' === $page && ASAE_PW_Roles::is_editor($user)) {
-                wp_die(esc_html__('You do not have permission to access this page.', 'asae-publishing-workflow'));
-            }
+    /**
+     * Build a URL for a specific tab.
+     *
+     * @param string $tab   Tab slug.
+     * @param array  $extra Extra query args.
+     * @return string
+     */
+    public static function tab_url($tab = 'dashboard', $extra = array()) {
+        $args = array_merge(array('page' => self::PAGE_SLUG, 'tab' => $tab), $extra);
+        return add_query_arg($args, admin_url('admin.php'));
+    }
+
+    /**
+     * Render the page with tab navigation and routed content.
+     */
+    public function render_page() {
+        $user       = wp_get_current_user();
+        $is_admin   = current_user_can('manage_options');
+        $is_publisher = ASAE_PW_Roles::is_publisher($user);
+        $is_editor  = ASAE_PW_Roles::is_editor($user);
+        $active_tab = self::get_current_tab();
+
+        // Access control.
+        if ('submissions' === $active_tab && $is_editor && !$is_admin) {
+            wp_die(esc_html__('You do not have permission to access this tab.', 'asae-publishing-workflow'));
+        }
+        if (in_array($active_tab, array('assignments', 'settings'), true) && !$is_admin) {
+            wp_die(esc_html__('You do not have permission to access this tab.', 'asae-publishing-workflow'));
         }
 
-        switch ($page) {
-            case 'asae-pw-dashboard':
-                ASAE_PW_Admin_Dashboard::render();
-                break;
-            case 'asae-pw-submissions':
-                ASAE_PW_Admin_Submissions::render();
-                break;
-            case 'asae-pw-activity-log':
-                ASAE_PW_Admin_Activity::render();
-                break;
-            case 'asae-pw-assignments':
-                ASAE_PW_Admin_Assignments::render();
-                break;
-            case 'asae-pw-settings':
-                ASAE_PW_Admin_Settings::render();
-                break;
+        // Define available tabs with visibility rules.
+        $tabs = array();
+        $tabs['dashboard'] = __('Dashboard', 'asae-publishing-workflow');
+
+        if ($is_admin || $is_publisher) {
+            $tabs['submissions'] = __('Submissions', 'asae-publishing-workflow');
         }
+
+        $tabs['activity-log'] = __('Activity Log', 'asae-publishing-workflow');
+
+        if ($is_admin) {
+            $tabs['assignments'] = __('Assignments', 'asae-publishing-workflow');
+            $tabs['settings']    = __('Settings', 'asae-publishing-workflow');
+        }
+
+        ?>
+        <div class="wrap asae-pw-wrap">
+            <h1><?php esc_html_e('Publishing Workflow', 'asae-publishing-workflow'); ?></h1>
+
+            <nav class="nav-tab-wrapper">
+                <?php foreach ($tabs as $slug => $label) : ?>
+                    <a href="<?php echo esc_url(self::tab_url($slug)); ?>"
+                       class="nav-tab <?php echo $active_tab === $slug ? 'nav-tab-active' : ''; ?>"
+                       <?php echo $active_tab === $slug ? 'aria-current="page"' : ''; ?>>
+                        <?php echo esc_html($label); ?>
+                    </a>
+                <?php endforeach; ?>
+            </nav>
+
+            <div class="asae-pw-tab-content">
+                <?php
+                switch ($active_tab) {
+                    case 'dashboard':
+                        ASAE_PW_Admin_Dashboard::render();
+                        break;
+                    case 'submissions':
+                        ASAE_PW_Admin_Submissions::render();
+                        break;
+                    case 'activity-log':
+                        ASAE_PW_Admin_Activity::render();
+                        break;
+                    case 'assignments':
+                        ASAE_PW_Admin_Assignments::render();
+                        break;
+                    case 'settings':
+                        ASAE_PW_Admin_Settings::render();
+                        break;
+                }
+                ?>
+            </div>
+        </div>
+        <?php
     }
 
     /**
@@ -151,25 +178,16 @@ class ASAE_PW_Admin {
     }
 
     /**
-     * Enqueue admin CSS and JS on our plugin pages.
+     * Enqueue admin CSS and JS on our plugin page and post screens.
      *
      * @param string $hook_suffix
      */
     public function enqueue_assets($hook_suffix) {
         $our_pages = array(
-            'asae_page_asae-pw-dashboard',
-            'asae_page_asae-pw-submissions',
-            'asae_page_asae-pw-activity-log',
-            'asae_page_asae-pw-assignments',
-            'asae_page_asae-pw-settings',
-            'asae-explore_page_asae-pw-dashboard',
-            'asae-explore_page_asae-pw-submissions',
-            'asae-explore_page_asae-pw-activity-log',
-            'asae-explore_page_asae-pw-assignments',
-            'asae-explore_page_asae-pw-settings',
+            'asae_page_' . self::PAGE_SLUG,
+            'asae-explore_page_' . self::PAGE_SLUG,
         );
 
-        // Also load on post edit screens for meta boxes.
         $is_our_page = in_array($hook_suffix, $our_pages, true)
             || 'post.php' === $hook_suffix
             || 'post-new.php' === $hook_suffix
@@ -197,19 +215,19 @@ class ASAE_PW_Admin {
         wp_localize_script('asae-pw-admin', 'asaePW', array(
             'ajaxUrl'  => admin_url('admin-ajax.php'),
             'nonces'   => array(
-                'workflow' => wp_create_nonce('asae_pw_workflow'),
-                'trash'    => wp_create_nonce('asae_pw_trash'),
-                'settings' => wp_create_nonce('asae_pw_settings'),
+                'workflow'    => wp_create_nonce('asae_pw_workflow'),
+                'trash'       => wp_create_nonce('asae_pw_trash'),
+                'settings'    => wp_create_nonce('asae_pw_settings'),
                 'assignments' => wp_create_nonce('asae_pw_assignments'),
                 'activity'    => wp_create_nonce('asae_pw_activity'),
             ),
             'i18n' => array(
-                'confirm_approve'    => __('Are you sure you want to approve this submission?', 'asae-publishing-workflow'),
-                'confirm_reject'     => __('Are you sure you want to reject this submission?', 'asae-publishing-workflow'),
+                'confirm_approve'      => __('Are you sure you want to approve this submission?', 'asae-publishing-workflow'),
+                'confirm_reject'       => __('Are you sure you want to reject this submission?', 'asae-publishing-workflow'),
                 'reject_note_required' => __('A comment is required when rejecting a submission.', 'asae-publishing-workflow'),
                 'trash_reason_required' => __('A reason is required for trash requests.', 'asae-publishing-workflow'),
-                'loading'            => __('Loading...', 'asae-publishing-workflow'),
-                'error'              => __('An error occurred. Please try again.', 'asae-publishing-workflow'),
+                'loading'              => __('Loading...', 'asae-publishing-workflow'),
+                'error'                => __('An error occurred. Please try again.', 'asae-publishing-workflow'),
             ),
         ));
     }

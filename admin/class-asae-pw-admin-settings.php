@@ -33,9 +33,6 @@ class ASAE_PW_Admin_Settings {
         unset($all_post_types['attachment']);
 
         ?>
-        <div class="wrap asae-pw-wrap">
-            <h1><?php esc_html_e('Publishing Workflow Settings', 'asae-publishing-workflow'); ?></h1>
-
             <form id="asae-pw-settings-form">
                 <table class="form-table" role="presentation">
                     <tr>
@@ -140,7 +137,6 @@ class ASAE_PW_Admin_Settings {
             <button type="button" class="button" id="asae-pw-check-updates"><?php esc_html_e('Check for Updates Now', 'asae-publishing-workflow'); ?></button>
             <span class="spinner" id="asae-pw-update-spinner"></span>
             <span id="asae-pw-update-result"></span>
-        </div>
         <?php
     }
 

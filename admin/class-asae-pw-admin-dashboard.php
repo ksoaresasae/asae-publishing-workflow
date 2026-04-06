@@ -32,15 +32,12 @@ class ASAE_PW_Admin_Dashboard {
         $trash_pending_count = $is_admin ? ASAE_PW_Trash::count_pending() : 0;
 
         ?>
-        <div class="wrap asae-pw-wrap">
-            <h1><?php esc_html_e('Publishing Workflow', 'asae-publishing-workflow'); ?></h1>
-
             <div class="asae-pw-dashboard-cards">
                 <?php if ($is_admin || $is_publisher) : ?>
                 <div class="asae-pw-card">
                     <h2><?php esc_html_e('Pending Submissions', 'asae-publishing-workflow'); ?></h2>
                     <p class="asae-pw-count"><?php echo esc_html($pending_count); ?></p>
-                    <a href="<?php echo esc_url(admin_url('admin.php?page=asae-pw-submissions')); ?>" class="button">
+                    <a href="<?php echo esc_url(ASAE_PW_Admin::tab_url('submissions')); ?>" class="button">
                         <?php esc_html_e('Review Submissions', 'asae-publishing-workflow'); ?>
                     </a>
                 </div>
@@ -50,7 +47,7 @@ class ASAE_PW_Admin_Dashboard {
                 <div class="asae-pw-card">
                     <h2><?php esc_html_e('Pending Trash Requests', 'asae-publishing-workflow'); ?></h2>
                     <p class="asae-pw-count"><?php echo esc_html($trash_pending_count); ?></p>
-                    <a href="<?php echo esc_url(admin_url('admin.php?page=asae-pw-dashboard&view=trash-requests')); ?>" class="button">
+                    <a href="<?php echo esc_url(ASAE_PW_Admin::tab_url('dashboard', array('view' => 'trash-requests'))); ?>" class="button">
                         <?php esc_html_e('Review Trash Requests', 'asae-publishing-workflow'); ?>
                     </a>
                 </div>
@@ -129,7 +126,6 @@ class ASAE_PW_Admin_Dashboard {
             <?php if ($is_admin) : ?>
                 <?php self::render_trash_requests(); ?>
             <?php endif; ?>
-        </div>
         <?php
     }
 

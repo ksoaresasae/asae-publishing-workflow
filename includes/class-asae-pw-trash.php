@@ -172,7 +172,7 @@ class ASAE_PW_Trash {
         // Add Activity link.
         $actions['activity'] = sprintf(
             '<a href="%s" aria-label="%s">%s</a>',
-            esc_url(admin_url('admin.php?page=asae-pw-activity-log&post_id=' . $post->ID)),
+            esc_url(ASAE_PW_Admin::tab_url('activity-log', array('post_id' => $post->ID))),
             esc_attr(sprintf(__('View activity for &#8220;%s&#8221;', 'asae-publishing-workflow'), $post->post_title)),
             esc_html__('Activity', 'asae-publishing-workflow')
         );

@@ -91,7 +91,7 @@ class ASAE_PW_Notifications {
         );
 
         $edit_url = get_edit_post_link($post_id, 'raw');
-        $review_url = admin_url('admin.php?page=asae-pw-submissions');
+        $review_url = ASAE_PW_Admin::tab_url('submissions');
 
         $term_names = array();
         foreach ($post_terms as $tid) {
@@ -213,7 +213,7 @@ class ASAE_PW_Notifications {
             'post'       => $post,
             'requester'  => $requester,
             'reason'     => $reason,
-            'review_url' => admin_url('admin.php?page=asae-pw-dashboard'),
+            'review_url' => ASAE_PW_Admin::tab_url('dashboard', array('view' => 'trash-requests')),
             'site_name'  => get_bloginfo('name'),
         );
 
@@ -297,7 +297,7 @@ class ASAE_PW_Notifications {
                     'submitter'     => $user,
                     'note'          => __('Content Area change has been proposed for this post.', 'asae-publishing-workflow'),
                     'edit_url'      => get_edit_post_link($post_id, 'raw'),
-                    'review_url'    => admin_url('admin.php?page=asae-pw-submissions'),
+                    'review_url'    => ASAE_PW_Admin::tab_url('submissions'),
                     'content_areas' => '',
                     'site_name'     => get_bloginfo('name'),
                     'recipient'     => $recipient,
