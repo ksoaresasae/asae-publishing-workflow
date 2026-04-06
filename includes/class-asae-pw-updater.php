@@ -164,7 +164,31 @@ class ASAE_PW_Updater {
         delete_site_transient('update_plugins');
         wp_update_plugins();
 
-        wp_send_json_success(array('message' => __('Update check complete.', 'asae-publishing-workflow')));
+        // Check if an update is now available.
+        $update_plugins = get_site_transient('update_plugins');
+        $has_update     = isset($update_plugins->response[$this->basename]);
+        $new_version    = $has_update ? $update_plugins->response[$this->basename]->new_version : '';
+
+        if ($has_update) {
+            wp_send_json_success(array(
+                'message'     => sprintf(
+                    /* translators: %s: new version number */
+                    __('Update available: v%s. Go to the Plugins page to update.', 'asae-publishing-workflow'),
+                    $new_version
+                ),
+                'has_update'  => true,
+                'new_version' => $new_version,
+            ));
+        } else {
+            wp_send_json_success(array(
+                'message'    => sprintf(
+                    /* translators: %s: current version */
+                    __('You are running the latest version (v%s).', 'asae-publishing-workflow'),
+                    $this->version
+                ),
+                'has_update' => false,
+            ));
+        }
     }
 
     /**
