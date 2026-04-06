@@ -26,6 +26,63 @@ class ASAE_PW_Workflow {
         // pointer meta so a fresh shadow can be created next time.
         add_action('wp_trash_post', array(__CLASS__, 'on_shadow_trashed'));
         add_action('before_delete_post', array(__CLASS__, 'on_shadow_trashed'));
+
+        // Re-sync shadow's Content Area terms from the original on every save.
+        // Gutenberg's REST save may strip terms from the shadow, which would
+        // cause the Publisher's submissions query to miss it.
+        add_action('save_post', array(__CLASS__, 'sync_shadow_terms'), 99, 2);
+
+        // Show a "Pending Update" badge on the published post in the post
+        // list when there's a pending shadow draft for it.
+        add_filter('display_post_states', array(__CLASS__, 'add_pending_update_state'), 10, 2);
+    }
+
+    /**
+     * Add a "Pending Update" post state on the original when it has a
+     * pending shadow draft submission.
+     *
+     * @param string[] $post_states
+     * @param WP_Post  $post
+     * @return string[]
+     */
+    public static function add_pending_update_state($post_states, $post) {
+        $shadow_id = get_post_meta($post->ID, '_asae_pw_has_shadow', true);
+        if (!$shadow_id) {
+            return $post_states;
+        }
+        $shadow_post = get_post($shadow_id);
+        if (!$shadow_post || 'trash' === $shadow_post->post_status) {
+            return $post_states;
+        }
+        // Only flag if there's an actual pending submission for the shadow.
+        $pending = self::get_pending_submission((int) $shadow_id);
+        if ($pending) {
+            $post_states['asae_pw_pending_update'] = __('Pending Update', 'asae-publishing-workflow');
+        }
+        return $post_states;
+    }
+
+    /**
+     * Re-sync a shadow draft's Content Area terms from its original.
+     *
+     * Hooked late on save_post so any earlier save processing (Gutenberg REST,
+     * classic editor form, etc.) is overridden.
+     *
+     * @param int     $post_id
+     * @param WP_Post $post
+     */
+    public static function sync_shadow_terms($post_id, $post) {
+        if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+            return;
+        }
+        $shadow_of = get_post_meta($post_id, '_asae_pw_shadow_of', true);
+        if (!$shadow_of) {
+            return;
+        }
+        $original_terms = ASAE_PW_Taxonomy::get_post_term_ids((int) $shadow_of);
+        if (!empty($original_terms)) {
+            wp_set_object_terms($post_id, $original_terms, ASAE_PW_Taxonomy::TAXONOMY);
+        }
     }
 
     /**
