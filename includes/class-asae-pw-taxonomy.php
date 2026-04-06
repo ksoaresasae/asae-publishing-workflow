@@ -64,7 +64,14 @@ class ASAE_PW_Taxonomy {
      */
     public static function meta_box_callback($post, $box) {
         if (current_user_can('manage_options')) {
-            // Admins get the standard category checklist.
+            // Gutenberg's block-editor compat layer can call meta_box_cb with
+            // a WP_Block_Editor_Context object instead of the expected
+            // meta-box args array. Normalize before delegating to core.
+            if (!is_array($box) || empty($box['args']['taxonomy'])) {
+                $box = array(
+                    'args' => array('taxonomy' => self::TAXONOMY),
+                );
+            }
             post_categories_meta_box($post, $box);
             return;
         }
