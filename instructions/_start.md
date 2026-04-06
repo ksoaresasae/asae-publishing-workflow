@@ -6,7 +6,7 @@ This is a WordPress plugin. The plugin code lives in the root of this repository
 
 * Name: ASAE Publishing Workflow
 * Slug: asae-publishing-workflow
-* Version: 0.0.1
+* Version: 0.0.2
 * Author/developer: Keith M. Soares (ksoares@asaecenter.org)
 * Company: ASAE
 * License: GPL v2 or later
